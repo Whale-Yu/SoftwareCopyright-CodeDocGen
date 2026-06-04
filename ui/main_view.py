@@ -267,14 +267,14 @@ class MainView(ft.Column):
             self._show_snackbar("请先选择源文件夹", is_error=True)
             return
 
-        header = self._config_panel.get_header()
-        if not header:
-            self._show_snackbar("请先填写页眉（软件名称+版本号）", is_error=True)
-            return
-
         suffixes = self._options_panel.get_selected_suffixes()
         if not suffixes:
             self._show_snackbar("请先选择代码后缀", is_error=True)
+            return
+
+        header = self._config_panel.get_header()
+        if not header:
+            self._show_snackbar("请先填写页眉（软件名称+版本号）", is_error=True)
             return
 
         self._save_config()
@@ -339,7 +339,7 @@ class MainView(ft.Column):
             f"文档已生成: {os.path.basename(output_path)}",
             actions=[
                 ft.SnackBarAction(label="打开文档", on_click=open_file),
-                ft.SnackBarAction(label="打开文件夹", on_click=open_folder),
+                ft.SnackBarAction(label="打开文件夹", on_click=open_folder), # 无用
             ],
         )
 
@@ -351,23 +351,31 @@ class MainView(ft.Column):
 
     # --- 辅助方法 ---
     def _show_progress(self, visible: bool):
+        """
+        显示或隐藏进度条
+        :param visible: True 显示，False 隐藏
+        """
         self._progress_bar.visible = visible
         self._progress_bar.update()
 
     def _show_snackbar(self, message: str, is_error: bool = False, actions=None):
+        """
+        显示一个SnackBar消息
+        :param message: 消息内容
+        :param is_error: 是否为错误消息，决定颜色
+        :param actions: 可选的操作按钮列表，格式为 [(label, on_click_function), ...]
+        """
         bg = ft.Colors.RED_100 if is_error else ft.Colors.GREEN_100
         color = ft.Colors.RED_800 if is_error else ft.Colors.GREEN_800
         snack = ft.SnackBar(
             content=ft.Text(message, color=color),
             bgcolor=bg,
-            action="关闭",
-            on_action=lambda e: None,
+            show_close_icon=True,
+            
         )
         if actions:
-            snack.actions = actions
-        self.page.snack_bar = snack
-        self.page.snack_bar.open = True
-        self.page.update()
+            snack.action = actions[0]
+        self.page.show_dialog(snack)
 
     # --- 配置持久化 ---
     def _load_config(self):
