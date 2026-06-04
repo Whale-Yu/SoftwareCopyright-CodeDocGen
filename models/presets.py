@@ -17,15 +17,15 @@ from core.language_config import get_all_suffixes, get_default_selected_suffixes
 PAGE_FORMATS: dict[str, str] = {
     "arabic": "1, 2, 3...",
     "dash": "- 1 -, - 2 -, - 3 -...",
-    "emdash": "\u2014\u2014 1 \u2014\u2014, \u2014\u2014 2 \u2014\u2014, \u2014\u2014 3 \u2014\u2014",
-    "roman": "\u2160, \u2161, \u2162...",
-    "page_cn": "\u7b2c 1 \u9875",
-    "page_total": "\u7b2c 1 \u9875 \u5171 X \u9875",
+    "emdash": "—— 1 ——, —— 2 ——, —— 3 ——",
+    "roman": "Ⅰ, Ⅱ, Ⅲ...",
+    "page_cn": "第 1 页",
+    "page_total": "第 1 页 共 X 页",
     "slash": "1 / X",
-    "cn_num": "\u7b2c\u4e00\u9875",
-    "cn_total": "\u7b2c\u4e00\u9875 \u5171 X \u9875",
-    "cn_comma": "1\uff0c2\uff0c3\uff0c...",
-    "custom": "\u81ea\u5b9a\u4e49",
+    "cn_num": "第一页",
+    "cn_total": "第一页 共 X 页",
+    "cn_comma": "1，2，3，...",
+    "custom": "自定义",
 }
 
 # 预设代码后缀
@@ -39,3 +39,7 @@ PRESET_IGNORE_DIRS: list[str] = [
     "node_modules", "dist", ".git", "__pycache__", "build",
     "target", ".venv", "venv", ".idea", ".vscode",
 ]
+
+# 代码处理选项默认值
+STRIP_EMPTY_LINES_DEFAULT: bool = True # 是否去除空行
+STRIP_COMMENTS_DEFAULT: bool = False # 是否去除注释

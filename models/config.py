@@ -13,6 +13,7 @@ Copyright (c) 2026 by 余俊瑜, All Rights Reserved.
 """配置数据模型"""
 from dataclasses import dataclass, field
 from typing import Optional
+from .presets import STRIP_EMPTY_LINES_DEFAULT, STRIP_COMMENTS_DEFAULT
 
 
 @dataclass
@@ -28,7 +29,8 @@ class AppConfig:
     preset_ignore_states: dict[str, bool] = field(default_factory=dict)  # 预设屏蔽目录勾选状态
     output_mode: str = "auto"                     # "all" | "split" | "auto"
     output_path: str = ""                         # 输出路径
-    strip_comments: bool = True                   # 是否去除注释
+    strip_empty_lines: bool = STRIP_EMPTY_LINES_DEFAULT
+    strip_comments: bool = STRIP_COMMENTS_DEFAULT
 
     def to_dict(self) -> dict:
         return {
@@ -42,6 +44,7 @@ class AppConfig:
             "preset_ignore_states": self.preset_ignore_states,
             "output_mode": self.output_mode,
             "output_path": self.output_path,
+            "strip_empty_lines": self.strip_empty_lines,
             "strip_comments": self.strip_comments,
         }
 
@@ -58,5 +61,6 @@ class AppConfig:
             preset_ignore_states=d.get("preset_ignore_states", {}),
             output_mode=d.get("output_mode", "auto"),
             output_path=d.get("output_path", ""),
-            strip_comments=d.get("strip_comments", True),
+            strip_empty_lines=d.get("strip_empty_lines", STRIP_EMPTY_LINES_DEFAULT),
+            strip_comments=d.get("strip_comments", STRIP_COMMENTS_DEFAULT),
         )

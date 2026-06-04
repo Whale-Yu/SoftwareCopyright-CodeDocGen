@@ -11,7 +11,7 @@ Copyright (c) 2026 by 余俊瑜, All Rights Reserved.
 '''
 
 import flet as ft
-from models.presets import PRESET_SUFFIXES, PRESET_IGNORE_DIRS, DEFAULT_SELECTED_SUFFIXES
+from models.presets import PRESET_SUFFIXES, PRESET_IGNORE_DIRS, DEFAULT_SELECTED_SUFFIXES, STRIP_EMPTY_LINES_DEFAULT, STRIP_COMMENTS_DEFAULT
 from ui.widgets.chip_input import ChipInput
 
 
@@ -178,14 +178,14 @@ class OptionsPanel(ft.Column):
         self._strip_empty_lines = ft.Checkbox(
             label="去除空行",
             label_style=ft.TextStyle(size=14),
-            value=True,
+            value=STRIP_EMPTY_LINES_DEFAULT,
             visual_density=ft.VisualDensity.COMPACT,
             scale=0.85,
         )
         self._strip_comments = ft.Checkbox(
             label="去除注释",
             label_style=ft.TextStyle(size=14),
-            value=False,
+            value=STRIP_COMMENTS_DEFAULT,
             visual_density=ft.VisualDensity.COMPACT,
             scale=0.85,
         )
