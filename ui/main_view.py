@@ -28,6 +28,7 @@ from ui.widgets.folder_drop_zone import FolderDropZone
 from ui.widgets.options_panel import OptionsPanel
 from ui.widgets.code_stats2_panel import CodeStats2Panel
 from ui.widgets.code_file_list_panel import CodeFileListPanel
+from ui.widgets.snackbar_util import show_snackbar
 
 
 CONFIG_PATH = Path(__file__).parent.parent / "config.json"
@@ -182,7 +183,7 @@ class MainView(ft.Column):
         
         if not self._source_folder:
             print(f"[统计] 错误：未选择源文件夹")
-            self._show_snackbar("请先选择源文件夹", is_error=True)
+            show_snackbar(self.page, "请先选择源文件夹", is_error=True)
             return
 
         suffixes = self._options_panel.get_selected_suffixes()
@@ -190,7 +191,7 @@ class MainView(ft.Column):
         
         if not suffixes:
             print(f"[统计] 错误：未选择代码后缀")
-            self._show_snackbar("请先选择代码后缀", is_error=True)
+            show_snackbar(self.page, "请先选择代码后缀", is_error=True)
             return
 
         ignore_dirs = self._options_panel.get_ignore_dirs()
@@ -251,7 +252,7 @@ class MainView(ft.Column):
                 print(f"[后台] 发生错误: {str(ex)}")
                 error_msg = str(ex)
                 self.page.loop.call_soon_threadsafe(
-                    lambda: self._show_snackbar(f"统计失败: {error_msg}", is_error=True)
+                    lambda: show_snackbar(self.page, f"统计失败: {error_msg}", is_error=True)
                 )
             finally:
                 print(f"[后台] 进入finally块，清理进度条")
@@ -264,17 +265,17 @@ class MainView(ft.Column):
     def _on_generate(self, e):
         """生成文档"""
         if not self._source_folder:
-            self._show_snackbar("请先选择源文件夹", is_error=True)
+            show_snackbar(self.page, "请先选择源文件夹", is_error=True)
             return
 
         suffixes = self._options_panel.get_selected_suffixes()
         if not suffixes:
-            self._show_snackbar("请先选择代码后缀", is_error=True)
+            show_snackbar(self.page, "请先选择代码后缀", is_error=True)
             return
 
         header = self._config_panel.get_header()
         if not header:
-            self._show_snackbar("请先填写页眉（软件名称+版本号）", is_error=True)
+            show_snackbar(self.page, "请先填写页眉（软件名称+版本号）", is_error=True)
             return
 
         self._save_config()
@@ -332,50 +333,22 @@ class MainView(ft.Column):
         def open_file(e=None):
             os.startfile(output_path)
 
-        def open_folder(e=None):
-            os.startfile(os.path.dirname(output_path))
-
-        self._show_snackbar(
+        show_snackbar(
+            self.page,
             f"文档已生成: {os.path.basename(output_path)}",
-            actions=[
-                ft.SnackBarAction(label="打开文档", on_click=open_file),
-                ft.SnackBarAction(label="打开文件夹", on_click=open_folder), # 无用
-            ],
+            action=ft.SnackBarAction(label="打开文档", on_click=open_file),
         )
 
     def _on_generate_error(self, error_msg: str):
         self._show_progress(False)
         self._status_text.value = f"生成失败: {error_msg}"
         self._status_text.update()
-        self._show_snackbar(f"生成失败: {error_msg}", is_error=True)
+        show_snackbar(self.page, f"生成失败: {error_msg}", is_error=True)
 
     # --- 辅助方法 ---
     def _show_progress(self, visible: bool):
-        """
-        显示或隐藏进度条
-        :param visible: True 显示，False 隐藏
-        """
         self._progress_bar.visible = visible
         self._progress_bar.update()
-
-    def _show_snackbar(self, message: str, is_error: bool = False, actions=None):
-        """
-        显示一个SnackBar消息
-        :param message: 消息内容
-        :param is_error: 是否为错误消息，决定颜色
-        :param actions: 可选的操作按钮列表，格式为 [(label, on_click_function), ...]
-        """
-        bg = ft.Colors.RED_100 if is_error else ft.Colors.GREEN_100
-        color = ft.Colors.RED_800 if is_error else ft.Colors.GREEN_800
-        snack = ft.SnackBar(
-            content=ft.Text(message, color=color),
-            bgcolor=bg,
-            show_close_icon=True,
-            
-        )
-        if actions:
-            snack.action = actions[0]
-        self.page.show_dialog(snack)
 
     # --- 配置持久化 ---
     def _load_config(self):

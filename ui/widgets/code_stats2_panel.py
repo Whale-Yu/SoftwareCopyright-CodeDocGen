@@ -3,7 +3,7 @@
 Author: Whale-Yu 2933582448@qq.com
 Date: 2026-06-04 08:10:03
 LastEditors: Whale-Yu 2933582448@qq.com
-LastEditTime: 2026-06-04 11:31:49
+LastEditTime: 2026-06-04 20:29:45
 FilePath: /Tool_20260604_SoftwareCopyright-CodeDocGen/SC-CodeDocGen/ui/widgets/code_stats2_panel.py
 Description: 
 

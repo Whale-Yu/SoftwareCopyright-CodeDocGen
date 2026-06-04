@@ -13,6 +13,7 @@ Copyright (c) 2026 by 余俊瑜, All Rights Reserved.
 import flet as ft
 from models.presets import PRESET_SUFFIXES, PRESET_IGNORE_DIRS, DEFAULT_SELECTED_SUFFIXES, STRIP_EMPTY_LINES_DEFAULT, STRIP_COMMENTS_DEFAULT
 from ui.widgets.chip_input import ChipInput
+from ui.widgets.snackbar_util import show_snackbar
 
 
 class OptionsPanel(ft.Column):
@@ -265,15 +266,55 @@ class OptionsPanel(ft.Column):
         self._suffix_add_btn.visible = False
         self._suffix_chip_input._input.focus()
         self.update()
+    
+    def _reset_input_state(self):
+        """提取公共的UI重置逻辑"""
+        self._suffix_chip_input._input.value = ""
+        self._suffix_chip_input.visible = False
+        self._suffix_add_btn.visible = True
+        self.update()
 
     def _on_suffix_input_submit(self, e):
         text = e.control.value.strip()
-        if text and text not in self._suffix_chip_input.chips:
-            self._suffix_chip_input.chips.append(text)
-            self._suffix_chip_input._refresh_chips()
-            self._refresh_suffix_custom_chips()
-            if self.on_suffix_changed:
-                self.on_suffix_changed(self.get_selected_suffixes())
+        if not text:
+            self._suffix_chip_input._input.value = ""
+            self._suffix_chip_input.visible = False
+            self._suffix_add_btn.visible = True
+            self.update()
+            return
+
+        # 1. 检查预设后缀
+        if text in PRESET_SUFFIXES:
+            show_snackbar(self.page, f'无法添加: "{text}" 已在内置预设列表中', is_error=True)
+            self._reset_input_state()
+            return
+        
+        # 2. 检查是否已存在于自定义列表
+        if text in self._suffix_chip_input.chips:
+            show_snackbar(self.page, f'无法添加: "{text}" 已经在当前的自定义列表中', is_error=True)
+            self._reset_input_state()
+            return
+
+        # 3. 优化后的格式校验逻辑
+        # 合法格式判定：必须以 "." 开头，且 "." 后面必须有字符（不能只有点），且中间不能有空格
+        is_invalid_format = (
+            not text.startswith(".") or 
+            len(text) < 2 or 
+            " " in text.strip()
+        )
+        
+        if is_invalid_format:
+            show_snackbar(self.page, f'格式无效: 请输入正确的后缀名格式（如 ".py" 或 ".java"）', is_error=True)
+            self._reset_input_state()
+            return
+
+
+
+        self._suffix_chip_input.chips.append(text)
+        self._suffix_chip_input._refresh_chips()
+        self._refresh_suffix_custom_chips()
+        if self.on_suffix_changed:
+            self.on_suffix_changed(self.get_selected_suffixes())
         self._suffix_chip_input._input.value = ""
         self._suffix_chip_input.visible = False
         self._suffix_add_btn.visible = True
@@ -304,12 +345,29 @@ class OptionsPanel(ft.Column):
 
     def _on_ignore_input_submit(self, e):
         text = e.control.value.strip()
-        if text and text not in self._ignore_chip_input.chips:
-            self._ignore_chip_input.chips.append(text)
-            self._ignore_chip_input._refresh_chips()
-            self._refresh_ignore_custom_chips()
-            if self.on_ignore_changed:
-                self.on_ignore_changed(self.get_ignore_dirs())
+        if not text:
+            self._ignore_chip_input._input.value = ""
+            self._ignore_chip_input.visible = False
+            self._ignore_add_btn.visible = True
+            self.update()
+            return
+
+        is_preset = text in PRESET_IGNORE_DIRS
+        is_duplicate = text in self._ignore_chip_input.chips
+
+        if is_preset or is_duplicate:
+            show_snackbar(self.page, f'目录 "{text}" 已存在，请勿重复添加', is_error=True)
+            self._ignore_chip_input._input.value = ""
+            self._ignore_chip_input.visible = False
+            self._ignore_add_btn.visible = True
+            self.update()
+            return
+
+        self._ignore_chip_input.chips.append(text)
+        self._ignore_chip_input._refresh_chips()
+        self._refresh_ignore_custom_chips()
+        if self.on_ignore_changed:
+            self.on_ignore_changed(self.get_ignore_dirs())
         self._ignore_chip_input._input.value = ""
         self._ignore_chip_input.visible = False
         self._ignore_add_btn.visible = True
@@ -384,8 +442,10 @@ class OptionsPanel(ft.Column):
             if d in self._ignore_checkboxes:
                 self._ignore_checkboxes[d].value = state
 
-        self._suffix_chip_input.set_chips(config.get("suffixes", []))
-        self._ignore_chip_input.set_chips(config.get("ignore_dirs", []))
+        custom_suffixes = [s for s in config.get("suffixes", []) if s not in PRESET_SUFFIXES]
+        self._suffix_chip_input.set_chips(custom_suffixes)
+        custom_ignores = [d for d in config.get("ignore_dirs", []) if d not in PRESET_IGNORE_DIRS]
+        self._ignore_chip_input.set_chips(custom_ignores)
         
         # 恢复代码处理选项
         if "strip_empty_lines" in config:
@@ -399,7 +459,7 @@ class OptionsPanel(ft.Column):
 
     def get_config(self) -> dict:
         return {
-            "suffixes": self.get_selected_suffixes(),
+            "suffixes": self._suffix_chip_input.get_chips(),
             "preset_suffix_states": {k: v.value for k, v in self._suffix_checkboxes.items()},
             "ignore_dirs": [d for d in self._ignore_chip_input.get_chips()],
             "preset_ignore_states": {k: v.value for k, v in self._ignore_checkboxes.items()},
