@@ -65,8 +65,8 @@ class MainView(ft.Column):
                 [
                     self._folder_zone,
                     self._options_panel,
-                    self._code_file_list_panel,
                     self._code_stats2_panel,
+                    self._code_file_list_panel,
                 ],
                 spacing=16,
                 expand=True,
