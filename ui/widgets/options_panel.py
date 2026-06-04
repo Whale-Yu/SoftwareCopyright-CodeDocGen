@@ -3,7 +3,7 @@
 Author: Whale-Yu 2933582448@qq.com
 Date: 2026-06-04 07:56:35
 LastEditors: Whale-Yu 2933582448@qq.com
-LastEditTime: 2026-06-04 11:03:34
+LastEditTime: 2026-06-04 19:37:56
 FilePath: /Tool_20260604_SoftwareCopyright-CodeDocGen/SC-CodeDocGen/ui/widgets/options_panel.py
 Description: 代码后缀和屏蔽文件夹组件
 
@@ -176,14 +176,14 @@ class OptionsPanel(ft.Column):
 
         # ------ 代码处理选项 ------
         self._strip_empty_lines = ft.Checkbox(
-            label="去除空行",
+            label="去除空行（推荐：优化代码排版以规范程序鉴别材料）",
             label_style=ft.TextStyle(size=14),
             value=STRIP_EMPTY_LINES_DEFAULT,
             visual_density=ft.VisualDensity.COMPACT,
             scale=0.85,
         )
         self._strip_comments = ft.Checkbox(
-            label="去除注释",
+            label="去除注释（不建议：保留注释可提高与文档鉴别材料的匹配度）",
             label_style=ft.TextStyle(size=14),
             value=STRIP_COMMENTS_DEFAULT,
             visual_density=ft.VisualDensity.COMPACT,
@@ -191,8 +191,8 @@ class OptionsPanel(ft.Column):
         )
         process_options_wrap = ft.Row(
             [
-                ft.Container(self._strip_empty_lines, width=100),
-                ft.Container(self._strip_comments, width=100),
+                ft.Container(self._strip_empty_lines, width=330),
+                ft.Container(self._strip_comments, width=330),
             ],
             spacing=8,
             wrap=True,
