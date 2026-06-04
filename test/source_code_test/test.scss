@@ -1,0 +1,18 @@
+$primary-color: #4a90d9;
+$secondary-color: #666;
+
+/* SCSS 测试文件 */
+.container {
+    width: 100%;
+    padding: 20px;
+    
+    .title {
+        font-size: 24px;
+        color: $primary-color;
+    }
+    
+    .content {
+        color: $secondary-color;
+        margin-top: 10px;
+    }
+}

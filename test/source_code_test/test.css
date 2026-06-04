@@ -1,0 +1,18 @@
+/* CSS 测试文件 */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.title {
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+}
+
+.content {
+    line-height: 1.6;
+    color: #666;
+}
