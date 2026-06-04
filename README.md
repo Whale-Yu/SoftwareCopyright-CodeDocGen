@@ -2,7 +2,7 @@
 
 >基于Flet的软著代码文档生成工具
 
->Turn your source code into standard copyright code documents in 1 second.
+>一秒将你的源码转化为标准的软著源代码文档
 
 >敬请期待...
 
