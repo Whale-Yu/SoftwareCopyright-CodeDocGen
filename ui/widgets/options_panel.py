@@ -3,9 +3,9 @@
 Author: Whale-Yu 2933582448@qq.com
 Date: 2026-06-04 07:56:35
 LastEditors: Whale-Yu 2933582448@qq.com
-LastEditTime: 2026-06-04 19:37:56
+LastEditTime: 2026-06-04 20:07:30
 FilePath: /Tool_20260604_SoftwareCopyright-CodeDocGen/SC-CodeDocGen/ui/widgets/options_panel.py
-Description: 代码后缀和屏蔽文件夹组件
+Description: 代码后缀、屏蔽文件夹、代码处理、统计源码行数组件
 
 Copyright (c) 2026 by 余俊瑜, All Rights Reserved. 
 '''
@@ -16,7 +16,7 @@ from ui.widgets.chip_input import ChipInput
 
 
 class OptionsPanel(ft.Column):
-    """代码后缀、屏蔽目录、统计源码行数三个独立卡片面板"""
+    """代码后缀、屏蔽文件夹、代码处理、统计源码行数三个独立卡片面板"""
 
     def __init__(self, on_suffix_changed=None, on_ignore_changed=None, on_count_click=None):
         self.on_suffix_changed = on_suffix_changed
@@ -174,7 +174,7 @@ class OptionsPanel(ft.Column):
             bgcolor=ft.Colors.WHITE,
         )
 
-        # ------ 代码处理选项 ------
+        # ------ 代码处理 ------
         self._strip_empty_lines = ft.Checkbox(
             label="去除空行（推荐：优化代码排版以规范程序鉴别材料）",
             label_style=ft.TextStyle(size=14),
