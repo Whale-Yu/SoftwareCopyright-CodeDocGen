@@ -42,7 +42,7 @@ class ConfigPanel(ft.Column):
         self._page_format_label = ft.Text("页码样式", size=14)
         self._page_format_dd = ft.Dropdown(
             options=[
-                ft.dropdown.Option(key=k, text=f"{k} ({v})") for k, v in PAGE_FORMATS.items()
+                ft.dropdown.Option(key=k, text=f"{k} ({v})", style=ft.TextStyle(size=12, weight=ft.FontWeight.W_500)) for k, v in PAGE_FORMATS.items()
             ],
             value="arabic",
             border_radius=8,
