@@ -29,17 +29,18 @@ class ConfigPanel(ft.Column):
         self.on_config_changed = on_config_changed
 
         # ------ 区域1：文档信息 ------
+        self._header_label = ft.Text("页眉（软件名称+版本号）", size=14)
         self._header_input = ft.TextField(
-            label="页眉（软件名称+版本号）",
-            hint_text="例如：SC-CodeDocGenV1.0",
+            label="例如：SC-CodeDocGenV1.0",
             border_radius=8,
             dense=True,
             text_size=13,
+            expand=True,
             on_change=self._notify_config,
         )
 
+        self._page_format_label = ft.Text("页码样式", size=14)
         self._page_format_dd = ft.Dropdown(
-            label="页码格式",
             options=[
                 ft.dropdown.Option(key=k, text=f"{k} ({v})") for k, v in PAGE_FORMATS.items()
             ],
@@ -47,17 +48,41 @@ class ConfigPanel(ft.Column):
             border_radius=8,
             dense=True,
             text_size=13,
+            expand=True,
             on_select=self._on_page_format_change,
         )
 
         self._custom_page_format = ft.TextField(
-            label="自定义页码模板",
             hint_text="{page}/{total}",
             border_radius=8,
             dense=True,
             text_size=13,
             visible=False,
+            expand=True,
             on_change=self._notify_config,
+        )
+
+        # 页码位置
+        self._page_position_label = ft.Text("页码位置", size=14)
+        self._page_position_dd = ft.Dropdown(
+            options=[
+                ft.dropdown.Option(key="header_left", text="页眉左侧（顶端居左）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="header_center", text="页眉中间（顶端居中）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="header_right", text="页眉右侧（顶端居右）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="header_inner", text="页眉内侧（顶端内侧）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="header_outer", text="页眉外侧（顶端外侧）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="footer_left", text="页脚左侧（底端居左）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="footer_center", text="页脚中间（底端居中）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="footer_right", text="页脚右侧（底端居右）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="footer_inner", text="页脚内侧（底端内侧）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="footer_outer", text="页脚外侧（底端外侧）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
+            ],
+            value="header_right",
+            border_radius=8,
+            dense=True,
+            text_size=12,
+            expand=True,
+            on_select=self._notify_config,
         )
 
          # 文档信息卡片
@@ -68,18 +93,28 @@ class ConfigPanel(ft.Column):
                         [
                             ft.Icon(ft.Icons.DESCRIPTION, color=ft.Colors.GREY_600),
                             ft.Text("文档信息", size=14, weight=ft.FontWeight.W_500),
-                            ft.Text("设置页眉和页码格式", size=11, color=ft.Colors.GREY_500),
+                            ft.Text("设置页眉和页码", size=11, color=ft.Colors.GREY_500),
                         ],
                         spacing=4,
                         vertical_alignment=ft.CrossAxisAlignment.END,
                     ),
+                    ft.Container(height=8),
+                    self._header_label,
+                    ft.Container(height=2),
                     self._header_input,
+                    ft.Container(height=12),
+                    self._page_format_label,
+                    ft.Container(height=2),
                     ft.Row(
                         [self._page_format_dd, self._custom_page_format],
                         spacing=10,
                     ),
+                    ft.Container(height=12),
+                    self._page_position_label,
+                    ft.Container(height=2),
+                    self._page_position_dd,
                 ],
-                spacing=8,
+                spacing=0,
             ),
             padding=ft.Padding(16, 16, 16, 16),
             border=ft.Border(
@@ -102,7 +137,7 @@ class ConfigPanel(ft.Column):
             text_size=13,
             read_only=True,
             disabled=True,
-            width=120,
+            width=100,
         )
         self._lines_per_page_unit = ft.Text("行/页", size=13)
 
@@ -167,11 +202,12 @@ class ConfigPanel(ft.Column):
                         [
                             ft.Icon(ft.Icons.PRINT, color=ft.Colors.GREY_600),
                             ft.Text("输出设置", size=14, weight=ft.FontWeight.W_500),
-                            ft.Text("配置输出格式和路径", size=11, color=ft.Colors.GREY_500),
+                            ft.Text("配置输出模式和路径", size=11, color=ft.Colors.GREY_500),
                         ],
                         spacing=4,
                         vertical_alignment=ft.CrossAxisAlignment.END,
                     ),
+                    ft.Container(height=8),
                     ft.Row(
                         [
                             self._lines_per_page_label,
@@ -181,11 +217,11 @@ class ConfigPanel(ft.Column):
                         ],
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
-                    ft.Container(height=4),
+                    ft.Container(height=12),
                     self._output_mode_label,
                     ft.Container(height=2),
                     self._output_mode_group,
-                    ft.Container(height=4),
+                    ft.Container(height=12),
                     self._output_path_label,
                     ft.Container(height=2),
                     ft.Row(
@@ -193,7 +229,7 @@ class ConfigPanel(ft.Column):
                         spacing=10,
                     ),
                 ],
-                spacing=12,
+                spacing=0,
             ),
             padding=ft.Padding(16, 16, 16, 16),
             border=ft.Border(
@@ -257,6 +293,9 @@ class ConfigPanel(ft.Column):
     def get_custom_page_format(self) -> str:
         return self._custom_page_format.value.strip()
 
+    def get_page_position(self) -> str:
+        return self._page_position_dd.value or "header_right"
+
     def get_lines_per_page(self) -> int:
         return 50
 
@@ -271,6 +310,7 @@ class ConfigPanel(ft.Column):
             "header": self.get_header(),
             "page_format": self.get_page_format(),
             "custom_page_format": self.get_custom_page_format(),
+            "page_position": self.get_page_position(),
             "lines_per_page": self.get_lines_per_page(),
             "output_mode": self.get_output_mode(),
             "output_path": self.get_output_path(),
@@ -284,6 +324,7 @@ class ConfigPanel(ft.Column):
         self._page_format_dd.value = config.get("page_format", "arabic")
         self._custom_page_format.value = config.get("custom_page_format", "")
         self._custom_page_format.visible = (self._page_format_dd.value == "custom")
+        self._page_position_dd.value = config.get("page_position", "header_right")
         self._output_mode_group.value = config.get("output_mode", "auto")
         self._output_path_input.value = config.get("output_path", "")
         self.update()

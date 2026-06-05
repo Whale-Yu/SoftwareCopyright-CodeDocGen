@@ -15,18 +15,25 @@ from core.language_config import get_all_suffixes, get_default_selected_suffixes
 
 # 预设页码格式
 PAGE_FORMATS: dict[str, str] = {
+    # 基础纯数字样式
     "arabic": "1, 2, 3...",
+    "roman": "Ⅰ, Ⅱ, Ⅲ...",
     "dash": "- 1 -, - 2 -, - 3 -...",
     "emdash": "—— 1 ——, —— 2 ——, —— 3 ——",
-    "roman": "Ⅰ, Ⅱ, Ⅲ...",
-    "page_cn": "第 1 页",
-    "page_total": "第 1 页 共 X 页",
-    "slash": "1 / X",
-    "cn_num": "第一页",
-    "cn_total": "第一页 共 X 页",
+    
+    # 中文文字样式 (统一用 cn 开头)
+    "cn_arabic": "第 1 页",
+    "cn_arabic_total": "第 1 页 共 X 页",
+    "cn_number": "第一页",
+    "cn_number_total": "第一页 共 X 页",
     "cn_comma": "1，2，3，...",
+    
+    # 其他特殊结构
+    "slash_total": "1 / X",
     "custom": "自定义",
 }
+
+
 
 # 预设代码后缀
 PRESET_SUFFIXES: list[str] = get_all_suffixes()
