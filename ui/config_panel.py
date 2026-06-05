@@ -12,6 +12,7 @@ Copyright (c) 2026 by 余俊瑜, All Rights Reserved.
 '''
 
 """右侧配置面板"""
+import os
 import flet as ft
 from models.presets import PAGE_FORMATS
 
@@ -27,7 +28,7 @@ class ConfigPanel(ft.Column):
         self.on_generate_click = on_generate_click
         self.on_config_changed = on_config_changed
 
-        # 页眉输入
+        # ------ 区域1：文档信息 ------
         self._header_input = ft.TextField(
             label="页眉（软件名称+版本号）",
             hint_text="例如：SC-CodeDocGenV1.0",
@@ -37,7 +38,6 @@ class ConfigPanel(ft.Column):
             on_change=self._notify_config,
         )
 
-        # 页码格式
         self._page_format_dd = ft.Dropdown(
             label="页码格式",
             options=[
@@ -50,7 +50,6 @@ class ConfigPanel(ft.Column):
             on_select=self._on_page_format_change,
         )
 
-        # 自定义页码模板
         self._custom_page_format = ft.TextField(
             label="自定义页码模板",
             hint_text="{page}/{total}",
@@ -61,22 +60,91 @@ class ConfigPanel(ft.Column):
             on_change=self._notify_config,
         )
 
-        # 每页行数
+         # 文档信息卡片
+        doc_info_card = ft.Container(
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Icon(ft.Icons.DESCRIPTION, color=ft.Colors.GREY_600),
+                            ft.Text("文档信息", size=14, weight=ft.FontWeight.W_500),
+                            ft.Text("设置页眉和页码格式", size=11, color=ft.Colors.GREY_500),
+                        ],
+                        spacing=4,
+                        vertical_alignment=ft.CrossAxisAlignment.END,
+                    ),
+                    self._header_input,
+                    ft.Row(
+                        [self._page_format_dd, self._custom_page_format],
+                        spacing=10,
+                    ),
+                ],
+                spacing=8,
+            ),
+            padding=ft.Padding(16, 16, 16, 16),
+            border=ft.Border(
+                left=ft.BorderSide(1, ft.Colors.GREY_300),
+                top=ft.BorderSide(1, ft.Colors.GREY_300),
+                right=ft.BorderSide(1, ft.Colors.GREY_300),
+                bottom=ft.BorderSide(1, ft.Colors.GREY_300),
+            ),
+            border_radius=12,
+            bgcolor=ft.Colors.WHITE,
+        )
+
+        # ------ 区域2：输出设置 ------
+        # 每页代码行数（固定50不可修改）
+        self._lines_per_page_label = ft.Text("每页代码行数", size=14)
         self._lines_per_page = ft.TextField(
-            label="每页行数",
             value="50",
             border_radius=8,
             dense=True,
             text_size=13,
-            keyboard_type=ft.KeyboardType.NUMBER,
+            read_only=True,
+            disabled=True,
+            width=120,
+        )
+        self._lines_per_page_unit = ft.Text("行/页", size=13)
+
+        # 输出模式
+        self._output_mode_label = ft.Text("输出模式", size=14)
+        self._output_mode_group = ft.RadioGroup(
+            content=None,
+            value="auto",
             on_change=self._notify_config,
         )
+        output_mode_radios = ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.Radio(value="auto", label="自动推荐"),
+                        ft.Text("系统推荐：全部输出", size=12, color=ft.Colors.GREEN_600),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
+                ft.Radio(value="all", label="全部输出"),
+                ft.Radio(value="before_after_30", label="前后各30页（共60页）"),
+            ],
+            spacing=4,
+        )
+        self._output_mode_group.content = output_mode_radios
 
-        # 去除注释
-        self._strip_comments = ft.Checkbox(
-            label="去除注释",
-            value=True,
+        # 输出路径
+        self._output_path_label = ft.Text("输出路径", size=14)
+        self._output_path_input = ft.TextField(
+            hint_text="默认保存到桌面",
+            border_radius=8,
+            dense=True,
+            text_size=13,
+            expand=True,
             on_change=self._notify_config,
+        )
+        self._output_path_btn = ft.ElevatedButton(
+            "浏览",
+            on_click=self._on_select_output_path,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=8),
+            ),
         )
 
         # 按钮
@@ -90,21 +158,67 @@ class ConfigPanel(ft.Column):
             ),
         )
 
+    
+        # 输出设置卡片
+        output_card = ft.Container(
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Icon(ft.Icons.PRINT, color=ft.Colors.GREY_600),
+                            ft.Text("输出设置", size=14, weight=ft.FontWeight.W_500),
+                            ft.Text("配置输出格式和路径", size=11, color=ft.Colors.GREY_500),
+                        ],
+                        spacing=4,
+                        vertical_alignment=ft.CrossAxisAlignment.END,
+                    ),
+                    ft.Row(
+                        [
+                            self._lines_per_page_label,
+                            ft.Container(width=20),
+                            self._lines_per_page,
+                            self._lines_per_page_unit,
+                        ],
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    ft.Container(height=4),
+                    self._output_mode_label,
+                    ft.Container(height=2),
+                    self._output_mode_group,
+                    ft.Container(height=4),
+                    self._output_path_label,
+                    ft.Container(height=2),
+                    ft.Row(
+                        [self._output_path_input, self._output_path_btn],
+                        spacing=10,
+                    ),
+                ],
+                spacing=12,
+            ),
+            padding=ft.Padding(16, 16, 16, 16),
+            border=ft.Border(
+                left=ft.BorderSide(1, ft.Colors.GREY_300),
+                top=ft.BorderSide(1, ft.Colors.GREY_300),
+                right=ft.BorderSide(1, ft.Colors.GREY_300),
+                bottom=ft.BorderSide(1, ft.Colors.GREY_300),
+            ),
+            border_radius=12,
+            bgcolor=ft.Colors.WHITE,
+        )
+
+        # ------ 区域3：生成按钮 ------
+        generate_card = ft.Container(
+            content=ft.Row([self._generate_btn], alignment=ft.MainAxisAlignment.CENTER),
+            padding=ft.Padding(0, 2, 0, 2),
+        )
+
         super().__init__(
             [
-                ft.Text("配置", size=16, weight=ft.FontWeight.BOLD),
-                self._header_input,
-                ft.Row(
-                    [self._page_format_dd, self._custom_page_format],
-                    spacing=10,
-                ),
-                ft.Row(
-                    [self._lines_per_page, self._strip_comments],
-                    spacing=10,
-                ),
-                self._generate_btn,
+                doc_info_card,
+                output_card,
+                generate_card,
             ],
-            spacing=8,
+            spacing=12,
             scroll=ft.ScrollMode.AUTO,
             expand=True,
         )
@@ -119,6 +233,20 @@ class ConfigPanel(ft.Column):
         self._custom_page_format.update()
         self._notify_config()
 
+    def _on_select_output_path(self, e):
+        """选择输出路径"""
+        def on_path_result(e):
+            if e.path:
+                self._output_path_input.value = e.path
+                self._output_path_input.update()
+                self._notify_config()
+
+        self.page.get_directory_path_dialog = ft.FilePicker(on_result=on_path_result)
+        self.page.overlay.append(self.page.get_directory_path_dialog)
+        self.page.update()
+        initial_path = self._output_path_input.value or os.path.expanduser("~/Desktop")
+        self.page.get_directory_path_dialog.get_directory_path(initial_directory=initial_path)
+
     # --- 数据获取 ---
     def get_header(self) -> str:
         return self._header_input.value.strip()
@@ -130,13 +258,13 @@ class ConfigPanel(ft.Column):
         return self._custom_page_format.value.strip()
 
     def get_lines_per_page(self) -> int:
-        try:
-            return int(self._lines_per_page.value)
-        except ValueError:
-            return 50
+        return 50
 
-    def get_strip_comments(self) -> bool:
-        return self._strip_comments.value
+    def get_output_mode(self) -> str:
+        return self._output_mode_group.value or "auto"
+
+    def get_output_path(self) -> str:
+        return self._output_path_input.value.strip() or os.path.expanduser("~/Desktop")
 
     def get_config(self) -> dict:
         return {
@@ -144,7 +272,8 @@ class ConfigPanel(ft.Column):
             "page_format": self.get_page_format(),
             "custom_page_format": self.get_custom_page_format(),
             "lines_per_page": self.get_lines_per_page(),
-            "strip_comments": self.get_strip_comments(),
+            "output_mode": self.get_output_mode(),
+            "output_path": self.get_output_path(),
         }
 
     def apply_config(self, config: dict):
@@ -155,8 +284,8 @@ class ConfigPanel(ft.Column):
         self._page_format_dd.value = config.get("page_format", "arabic")
         self._custom_page_format.value = config.get("custom_page_format", "")
         self._custom_page_format.visible = (self._page_format_dd.value == "custom")
-        self._lines_per_page.value = str(config.get("lines_per_page", 50))
-        self._strip_comments.value = config.get("strip_comments", True)
+        self._output_mode_group.value = config.get("output_mode", "auto")
+        self._output_path_input.value = config.get("output_path", "")
         self.update()
 
     # --- 按钮状态 ---

@@ -57,7 +57,7 @@ class CodeStats2Panel(ft.Container):
                             ft.Container(
                                 content=ft.Column(
                                     [
-                                        ft.Text("有效代码行数", size=12, color=ft.Colors.GREY_600),
+                                        ft.Text("代码行数", size=12, color=ft.Colors.GREY_600),
                                         self._effective_lines,
                                     ],
                                     spacing=4,

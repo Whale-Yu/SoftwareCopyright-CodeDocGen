@@ -292,16 +292,26 @@ class MainView(ft.Column):
         def _run():
             try:
                 files = scan_files(self._source_folder, suffixes, ignore_set)
-                output_dir = os.path.expanduser("~/Desktop")
                 
-                # 使用简单输出模式
-                output_mode = "all"
+                # 使用配置面板的输出设置
+                output_mode_config = self._config_panel.get_output_mode()
+                # 转换配置面板的输出模式为 docx_generator 可用的模式
+                if output_mode_config == "auto":
+                    output_mode = "auto"
+                elif output_mode_config == "all":
+                    output_mode = "all"
+                elif output_mode_config == "before_after_30":
+                    output_mode = "split"
+                else:
+                    output_mode = "auto"
+                
                 lines_per_page = self._config_panel.get_lines_per_page()
                 process_options = self._options_panel.get_process_options()
                 strip_comments = process_options["strip_comments"]
                 strip_empty_lines = process_options["strip_empty_lines"]
                 page_format = self._config_panel.get_page_format()
                 custom_page_format = self._config_panel.get_custom_page_format()
+                output_dir = self._config_panel.get_output_path()
 
                 output_path = generate_docx(
                     header_text=header,
