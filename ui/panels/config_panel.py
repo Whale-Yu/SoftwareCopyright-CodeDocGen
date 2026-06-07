@@ -68,15 +68,10 @@ class ConfigPanel(ft.Column):
         self._page_position_dd = ft.Dropdown(
             options=[
                 ft.dropdown.Option(key="header_left", text="页眉左侧（顶端居左）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
-                ft.dropdown.Option(key="header_center", text="页眉中间（顶端居中）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
                 ft.dropdown.Option(key="header_right", text="页眉右侧（顶端居右）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
-                ft.dropdown.Option(key="header_inner", text="页眉内侧（顶端内侧）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
-                ft.dropdown.Option(key="header_outer", text="页眉外侧（顶端外侧）", style=ft.TextStyle(color=ft.Colors.BLUE_600, size=12, weight=ft.FontWeight.W_500)),
                 ft.dropdown.Option(key="footer_left", text="页脚左侧（底端居左）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
                 ft.dropdown.Option(key="footer_center", text="页脚中间（底端居中）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
                 ft.dropdown.Option(key="footer_right", text="页脚右侧（底端居右）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
-                ft.dropdown.Option(key="footer_inner", text="页脚内侧（底端内侧）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
-                ft.dropdown.Option(key="footer_outer", text="页脚外侧（底端外侧）", style=ft.TextStyle(color=ft.Colors.GREEN_600, size=12, weight=ft.FontWeight.W_500)),
             ],
             value="header_right",
             border_radius=8,

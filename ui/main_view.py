@@ -320,6 +320,7 @@ class MainView(ft.Column):
                 strip_empty_lines = process_options["strip_empty_lines"]
                 page_format = self._config_panel.get_page_format()
                 custom_page_format = self._config_panel.get_custom_page_format()
+                page_position = self._config_panel.get_page_position()
                 line_numbering = self._config_panel.get_line_numbering()
                 output_dir = self._config_panel.get_output_path()
 
@@ -327,6 +328,7 @@ class MainView(ft.Column):
                     header_text=header,
                     page_format=page_format,
                     custom_page_format=custom_page_format,
+                    page_position=page_position,
                     line_numbering=line_numbering,
                     files=files,
                     ignore_dir_names=ignore_set,

@@ -15,7 +15,7 @@ import datetime
 from pathlib import Path
 from docx import Document
 from docx.shared import Pt, Cm, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
@@ -113,6 +113,7 @@ def generate_docx(
     header_text: str,
     page_format: str,
     custom_page_format: str,
+    page_position: str,
     line_numbering: str,
     files: list[Path],
     ignore_dir_names: set[str],
@@ -166,16 +167,15 @@ def generate_docx(
     # --- 页眉 ---
     header = section.header
     header.is_linked_to_previous = False
+    # 先清空页眉，后面根据 page_position 决定是否添加页眉内容
     hp = header.paragraphs[0]
-    hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hr = hp.add_run(header_text)
-    _set_font(hr, "宋体", 10)
+    hp.clear()
 
     # --- 页脚（页码）---
     footer = section.footer
     footer.is_linked_to_previous = False
     fp = footer.paragraphs[0]
-    fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fp.clear()
 
     # 收集所有有效代码行
     all_lines: list[str] = []
@@ -230,8 +230,8 @@ def generate_docx(
     # 刷新 total_pages
     total_pages = (len(all_lines) + lines_per_page - 1) // lines_per_page
 
-    # 写入页码到页脚（使用 XML 域代码实现每页不同页码）
-    _add_page_number_field(footer, page_format, total_pages, custom_page_format)
+    # 根据 page_position 决定在哪里添加页码
+    _add_page_number_by_position(section, header_text, page_position, page_format, total_pages, custom_page_format)
 
     # --- 生成文件名 ---
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -243,13 +243,80 @@ def generate_docx(
     return output_path
 
 
-def _add_page_number_field(footer, page_format: str, total_pages: int, custom_template: str = ""):
-    """在页脚中添加 PAGE / NUMPAGES 域代码，实现动态页码"""
+def _add_page_number_by_position(section, header_text: str, page_position: str, page_format: str, total_pages: int, custom_template: str = ""):
+    """根据 page_position 参数决定在页眉还是页脚添加页码，以及对齐方式"""
+    header = section.header
+    footer = section.footer
+    hp = header.paragraphs[0]
+    fp = footer.paragraphs[0]
+
+    # 解析 page_position，格式为 "header_left" / "footer_right" 等
+    if page_position.startswith("header_"):
+        # 页码在页眉，同一行：页眉内容始终居中，页码在左或右
+        
+        if page_position.endswith("_left"):
+            # 页眉左侧：[页码][tab][页眉内容]
+            hp.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            
+            paragraph_format = hp.paragraph_format
+            tab_stops = paragraph_format.tab_stops
+            tab_stops.add_tab_stop(Cm(7.5), WD_TAB_ALIGNMENT.CENTER)
+            
+            _add_page_number_field_content(hp, page_format, total_pages, custom_template)
+            hp.add_run("\t")
+            hr = hp.add_run(header_text)
+            _set_font(hr, "宋体", 10)
+            
+        elif page_position.endswith("_right"):
+            # 页眉右侧：[页眉内容][tab][页码]
+            hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            
+            paragraph_format = hp.paragraph_format
+            tab_stops = paragraph_format.tab_stops
+            tab_stops.add_tab_stop(Cm(7.5), WD_TAB_ALIGNMENT.CENTER)
+            
+            hr = hp.add_run(header_text)
+            _set_font(hr, "宋体", 10)
+            hp.add_run("\t")
+            _add_page_number_field_content(hp, page_format, total_pages, custom_template)
+            
+        else:
+            # 默认页眉右侧
+            hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            
+            paragraph_format = hp.paragraph_format
+            tab_stops = paragraph_format.tab_stops
+            tab_stops.add_tab_stop(Cm(7.5), WD_TAB_ALIGNMENT.CENTER)
+            
+            hr = hp.add_run(header_text)
+            _set_font(hr, "宋体", 10)
+            hp.add_run("\t")
+            _add_page_number_field_content(hp, page_format, total_pages, custom_template)
+    else:
+        # 页码在页脚，页眉正常显示
+        hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        hr = hp.add_run(header_text)
+        _set_font(hr, "宋体", 10)
+
+        # 确定页脚对齐方式
+        if page_position.endswith("_left"):
+            fp.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        elif page_position.endswith("_center"):
+            fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        elif page_position.endswith("_right"):
+            fp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        else:
+            fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        # 添加页码到页脚
+        _add_page_number_field_content(fp, page_format, total_pages, custom_template)
+
+
+def _add_page_number_field_content(paragraph, page_format: str, total_pages: int, custom_template: str = ""):
+    """在段落中添加 PAGE / NUMPAGES 域代码，实现动态页码"""
     # 需要根据 page_format 来构建域代码
     # Flet/python-docx 插入 PAGE 域代码的方式
-    fp = footer.paragraphs[0]
-    fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fp.clear()
+    fp = paragraph
 
     # 辅助函数：添加带字体设置的文本
     def add_text_run(text):
