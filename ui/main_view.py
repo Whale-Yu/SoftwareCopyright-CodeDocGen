@@ -22,11 +22,11 @@ from core.scanner import scan_files, get_ignore_dirs
 from core.counter import count_code_lines
 from core.docx_generator import generate_docx
 from models.config import AppConfig
-from ui.config_panel import ConfigPanel
+from ui.panels.config_panel import ConfigPanel
 from ui.widgets.folder_drop_zone import FolderDropZone
-from ui.widgets.options_panel import OptionsPanel
-from ui.widgets.code_stats2_panel import CodeStats2Panel
-from ui.widgets.code_file_list_panel import CodeFileListPanel
+from ui.panels.options_panel import OptionsPanel
+from ui.panels.code_stats2_panel import CodeStats2Panel
+from ui.panels.code_file_list_panel import CodeFileListPanel
 from ui.widgets.snackbar_util import show_snackbar
 
 
