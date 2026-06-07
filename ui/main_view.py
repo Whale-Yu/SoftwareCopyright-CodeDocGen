@@ -11,7 +11,6 @@ Description: 主界面整体布局
 Copyright (c) 2026 by 余俊瑜, All Rights Reserved. 
 '''
 
-import json
 import os
 import threading
 import time
@@ -31,16 +30,12 @@ from ui.widgets.code_file_list_panel import CodeFileListPanel
 from ui.widgets.snackbar_util import show_snackbar
 
 
-CONFIG_PATH = Path(__file__).parent.parent / "config.json"
-
-
 class MainView(ft.Column):
     """主界面"""
 
     def __init__(self):
         self._source_folder = ""
         self._config = AppConfig()
-        self._load_config()
         self._files = []
 
         self._folder_zone = FolderDropZone(on_folder_selected=self._on_folder_selected)
@@ -296,8 +291,6 @@ class MainView(ft.Column):
             show_snackbar(self.page, "请先填写页眉（软件名称+版本号）", is_error=True)
             return
 
-        self._save_config()
-
         ignore_dirs = self._options_panel.get_ignore_dirs()
         options_config = self._options_panel.get_config()
         preset_ignore = options_config.get("preset_ignore_states", {})
@@ -377,33 +370,3 @@ class MainView(ft.Column):
     def _show_progress(self, visible: bool):
         self._progress_bar.visible = visible
         self._progress_bar.update()
-
-    # --- 配置持久化 ---
-    def _load_config(self):
-        try:
-            if CONFIG_PATH.exists():
-                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                self._config = AppConfig.from_dict(data)
-        except Exception:
-            self._config = AppConfig()
-
-    def _save_config(self):
-        config_dict = {
-            **self._config_panel.get_config(),
-            **self._options_panel.get_config(),
-        }
-        try:
-            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-                json.dump(config_dict, f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
-
-    # --- 恢复配置 ---
-    def did_mount(self):
-        if self._config:
-            config_dict = self._config.to_dict()
-            self._config_panel.apply_config(config_dict)
-            self._options_panel.apply_config(config_dict)
-            if self._source_folder:
-                self._config_panel.set_button_enabled(True)
