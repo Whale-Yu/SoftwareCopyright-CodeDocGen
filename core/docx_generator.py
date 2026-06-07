@@ -24,8 +24,8 @@ from .comment_stripper import strip_comments
 
 # 页码格式渲染函数
 _CN_NUMBERS = [
-    "\u96f6", "\u4e00", "\u4e8c", "\u4e09", "\u56db",
-    "\u4e94", "\u516d", "\u4e03", "\u516b", "\u4e5d", "\u5341",
+    "零", "一", "二", "三", "四",
+    "五", "六", "七", "八", "九", "十",
 ]
 
 
@@ -62,14 +62,14 @@ def render_page_number(fmt_key: str, current: int, total: int, custom_template: 
     renderers = {
         "arabic": lambda: str(current),
         "dash": lambda: f"- {current} -",
-        "emdash": lambda: f"\u2014\u2014 {current} \u2014\u2014",
+        "emdash": lambda: f"—— {current} ——",
         "roman": lambda: _roman_number(current),
-        "page_cn": lambda: f"\u7b2c {current} \u9875",
-        "page_total": lambda: f"\u7b2c {current} \u9875 \u5171 {total} \u9875",
+        "page_cn": lambda: f"第 {current} 页",
+        "page_total": lambda: f"第 {current} 页 共 {total} 页",
         "slash": lambda: f"{current} / {total}",
-        "cn_num": lambda: f"\u7b2c{_cn_number(current)}\u9875",
-        "cn_total": lambda: f"\u7b2c{_cn_number(current)}\u9875 \u5171 {total} \u9875",
-        "cn_comma": lambda: "\uff0c".join(str(i) for i in range(1, total + 1)) if current == 1 else "",
+        "cn_num": lambda: f"第{_cn_number(current)}页",
+        "cn_total": lambda: f"第{_cn_number(current)}页 共 {total} 页",
+        "cn_comma": lambda: "，".join(str(i) for i in range(1, total + 1)) if current == 1 else "",
         "custom": lambda: custom_template.replace("{page}", str(current)).replace("{total}", str(total)),
     }
     fn = renderers.get(fmt_key)
@@ -78,11 +78,10 @@ def render_page_number(fmt_key: str, current: int, total: int, custom_template: 
     return str(current)
 
 
-def _set_font(run, font_name: str = "\u5b8b\u4f53", size_pt: float = 8):
-    """设置 run 的字体"""
+def _set_font(run, font_name: str = "宋体", size_pt: float = 10.5):
+    """设置 run 的字体：中文宋体，英文Times New Roman"""
     run.font.size = Pt(size_pt)
-    run.font.name = font_name
-    # 设置中文字体
+    # 设置中文字体和英文字体
     r = run._element
     rPr = r.find(qn('w:rPr'))
     if rPr is None:
@@ -92,7 +91,11 @@ def _set_font(run, font_name: str = "\u5b8b\u4f53", size_pt: float = 8):
     if rFonts is None:
         rFonts = OxmlElement('w:rFonts')
         rPr.insert(0, rFonts)
+    # 设置中文字体
     rFonts.set(qn('w:eastAsia'), font_name)
+    # 设置英文字体为Times New Roman
+    rFonts.set(qn('w:ascii'), "Times New Roman")
+    rFonts.set(qn('w:hAnsi'), "Times New Roman")
 
 
 def _set_paragraph_line_spacing(paragraph, pt_val: float = 12):
@@ -110,6 +113,7 @@ def generate_docx(
     header_text: str,
     page_format: str,
     custom_page_format: str,
+    line_numbering: str,
     files: list[Path],
     ignore_dir_names: set[str],
     strip_comments_flag: bool,
@@ -126,16 +130,38 @@ def generate_docx(
 
     # --- 页面设置 ---
     section = doc.sections[0]
-    section.top_margin = Cm(2.0)
-    section.bottom_margin = Cm(2.0)
-    section.left_margin = Cm(2.5)
-    section.right_margin = Cm(2.5)
+    # 设置A4纸张大小
+    section.page_width = Cm(21)
+    section.page_height = Cm(29.7)
+    # 标准文档边距设置
+    section.left_margin = Cm(3.17)
+    section.right_margin = Cm(3.17)
+    section.top_margin = Cm(2.3)
+    section.bottom_margin = Cm(2.3)
+    section.header_distance = Cm(1.5)
+    section.footer_distance = Cm(1.75)
+    # 根据配置设置行号
+    if line_numbering == "continuous":
+        line_numbering_elem = OxmlElement('w:lnNumType')
+        line_numbering_elem.set(qn('w:start'), '0')
+        line_numbering_elem.set(qn('w:countBy'), '1')
+        line_numbering_elem.set(qn('w:restart'), 'continuous')
+        section._sectPr.append(line_numbering_elem)
+    elif line_numbering == "per_page":
+        line_numbering_elem = OxmlElement('w:lnNumType')
+        line_numbering_elem.set(qn('w:start'), '0')
+        line_numbering_elem.set(qn('w:countBy'), '1')
+        line_numbering_elem.set(qn('w:restart'), 'newPage')
+        section._sectPr.append(line_numbering_elem)
 
     # --- 设置默认字体 ---
     style = doc.styles['Normal']
-    style.font.size = Pt(8)
-    style.font.name = "\u5b8b\u4f53"
-    style.element.rPr.rFonts.set(qn('w:eastAsia'), "\u5b8b\u4f53")
+    style.font.size = Pt(10.5)
+    style.font.name = "宋体"
+    # 设置中文字体和英文字体
+    style.element.rPr.rFonts.set(qn('w:eastAsia'), "宋体")
+    style.element.rPr.rFonts.set(qn('w:ascii'), "Times New Roman")
+    style.element.rPr.rFonts.set(qn('w:hAnsi'), "Times New Roman")
 
     # --- 页眉 ---
     header = section.header
@@ -143,7 +169,7 @@ def generate_docx(
     hp = header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     hr = hp.add_run(header_text)
-    _set_font(hr, "\u5b8b\u4f53", 8)
+    _set_font(hr, "宋体", 10)
 
     # --- 页脚（页码）---
     footer = section.footer
@@ -170,11 +196,11 @@ def generate_docx(
     # 输出模式处理
     if output_mode == "auto":
         if total_lines > 3000:
-            output_mode = "split"
+            output_mode = "before_after_30"
         else:
             output_mode = "all"
 
-    if output_mode == "split":
+    if output_mode == "before_after_30":
         half = lines_per_page * 30  # 前后各30页 ≈ 1500行
         if total_lines > half * 2:
             all_lines = all_lines[:half] + all_lines[-half:]
@@ -191,9 +217,9 @@ def generate_docx(
         p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
-        _set_paragraph_line_spacing(p, 12)
+        _set_paragraph_line_spacing(p, 14)
         run = p.add_run(line.rstrip())
-        _set_font(run, "\u5b8b\u4f53", 8)
+        _set_font(run, "宋体", 10.5)
 
     # 补足最后一页到 lines_per_page 行
     remaining = len(all_lines) % lines_per_page
@@ -209,7 +235,7 @@ def generate_docx(
 
     # --- 生成文件名 ---
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"\u8f6f\u8457\u4ee3\u7801\u6587\u6863_{timestamp}.docx"
+    filename = f"软著代码文档_{timestamp}.docx"
     output_path = Path(output_dir) / filename
     output_path.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(output_path))
@@ -225,43 +251,49 @@ def _add_page_number_field(footer, page_format: str, total_pages: int, custom_te
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     fp.clear()
 
+    # 辅助函数：添加带字体设置的文本
+    def add_text_run(text):
+        run = fp.add_run(text)
+        _set_font(run, "宋体", 9)
+        return run
+
     # 根据格式构建域代码
     if page_format == "arabic":
         _add_field(fp, "PAGE")
     elif page_format == "dash":
-        fp.add_run("- ").font.size = Pt(8)
+        add_text_run("- ")
         _add_field(fp, "PAGE")
-        fp.add_run(" -").font.size = Pt(8)
+        add_text_run(" -")
     elif page_format == "emdash":
-        fp.add_run("\u2014\u2014 ").font.size = Pt(8)
+        add_text_run("—— ")
         _add_field(fp, "PAGE")
-        fp.add_run(" \u2014\u2014").font.size = Pt(8)
+        add_text_run(" ——")
     elif page_format == "roman":
         _add_field(fp, "PAGE", "ROMAN")
     elif page_format == "page_cn":
-        fp.add_run("\u7b2c ").font.size = Pt(8)
+        add_text_run("第 ")
         _add_field(fp, "PAGE")
-        fp.add_run(" \u9875").font.size = Pt(8)
+        add_text_run(" 页")
     elif page_format == "page_total":
-        fp.add_run("\u7b2c ").font.size = Pt(8)
+        add_text_run("第 ")
         _add_field(fp, "PAGE")
-        fp.add_run(" \u9875 \u5171 ").font.size = Pt(8)
+        add_text_run(" 页 共 ")
         _add_field(fp, "NUMPAGES")
-        fp.add_run(" \u9875").font.size = Pt(8)
+        add_text_run(" 页")
     elif page_format == "slash":
         _add_field(fp, "PAGE")
-        fp.add_run(" / ").font.size = Pt(8)
+        add_text_run(" / ")
         _add_field(fp, "NUMPAGES")
     elif page_format == "cn_num":
-        fp.add_run("\u7b2c").font.size = Pt(8)
+        add_text_run("第")
         _add_field(fp, "PAGE")
-        fp.add_run("\u9875").font.size = Pt(8)
+        add_text_run("页")
     elif page_format == "cn_total":
-        fp.add_run("\u7b2c").font.size = Pt(8)
+        add_text_run("第")
         _add_field(fp, "PAGE")
-        fp.add_run("\u9875 \u5171 ").font.size = Pt(8)
+        add_text_run("页 共 ")
         _add_field(fp, "NUMPAGES")
-        fp.add_run("\u9875").font.size = Pt(8)
+        add_text_run("页")
     elif page_format == "custom":
         # 解析自定义模板
         parts = custom_template.replace("{page}", "\x00PAGE\x00").replace("{total}", "\x00NUMPAGES\x00")
@@ -271,20 +303,24 @@ def _add_page_number_field(footer, page_format: str, total_pages: int, custom_te
             elif part == "NUMPAGES":
                 _add_field(fp, "NUMPAGES")
             elif part:
-                fp.add_run(part).font.size = Pt(8)
+                add_text_run(part)
     else:
         _add_field(fp, "PAGE")
 
+    # 确保所有 run 都有正确的字体设置
     for run in fp.runs:
-        run.font.size = Pt(8)
+        if run.font.size is None or run.font.size.pt != 9:
+            _set_font(run, "宋体", 9)
 
 
 def _add_field(paragraph, field_type: str, fmt: str = None):
     """在段落中插入 Word 域代码 (PAGE / NUMPAGES)"""
+    # 创建三个 run 并设置字体
     run = paragraph.add_run()
     fldChar1 = OxmlElement('w:fldChar')
     fldChar1.set(qn('w:fldCharType'), 'begin')
     run._element.append(fldChar1)
+    _set_font(run, "宋体", 9)
 
     run2 = paragraph.add_run()
     instrText = OxmlElement('w:instrText')
@@ -294,8 +330,10 @@ def _add_field(paragraph, field_type: str, fmt: str = None):
         text += f" \\* {fmt}"
     instrText.text = text
     run2._element.append(instrText)
+    _set_font(run2, "宋体", 9)
 
     run3 = paragraph.add_run()
     fldChar2 = OxmlElement('w:fldChar')
     fldChar2.set(qn('w:fldCharType'), 'end')
     run3._element.append(fldChar2)
+    _set_font(run3, "宋体", 9)

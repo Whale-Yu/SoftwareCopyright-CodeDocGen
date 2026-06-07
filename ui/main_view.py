@@ -73,7 +73,7 @@ class MainView(ft.Column):
                 expand=True,
                 scroll=ft.ScrollMode.AUTO,
             ),
-            padding=ft.Padding(16, 16, 16, 16),
+            padding=ft.Padding(16, 16, 16, 0),
             expand=65,
         )
 
@@ -83,7 +83,7 @@ class MainView(ft.Column):
                 [
                     ft.Container(
                         content=self._config_panel,
-                        padding=ft.Padding(16, 16, 16, 16),
+                        padding=ft.Padding(16, 16, 16, 8),
                         border=ft.Border(
                             left=ft.BorderSide(1, ft.Colors.GREY_300),
                             top=ft.BorderSide(1, ft.Colors.GREY_300),
@@ -98,7 +98,7 @@ class MainView(ft.Column):
                 scroll=ft.ScrollMode.AUTO,
                 expand=True,
             ),
-            padding=ft.Padding(16, 16, 16, 16),
+            padding=ft.Padding(16, 16, 16, 0),
             expand=35,
         )
 
@@ -115,7 +115,11 @@ class MainView(ft.Column):
                 ],
                 spacing=10,
             ),
-            padding=ft.Padding(16, 0, 16, 8),
+            padding=ft.Padding(16, 8, 16, 8),
+            border=ft.Border(
+                top=ft.BorderSide(1, ft.Colors.GREY_200),
+            ),
+            bgcolor=ft.Colors.GREY_50,
         )
 
         super().__init__(
@@ -133,6 +137,7 @@ class MainView(ft.Column):
                 ),
                 status_bar,
             ],
+            spacing=0,
             expand=True,
         )
 
@@ -142,6 +147,8 @@ class MainView(ft.Column):
         self._status_text.value = f"已选择: {path}"
         self._status_text.update()
         self._config_panel.set_button_enabled(True)
+        # 重置输出模式为未统计状态
+        self._config_panel.reset_output_mode()
         
         # 立即统计该目录下所有文件（筛选前）
         def scan_all_files():
@@ -175,7 +182,15 @@ class MainView(ft.Column):
         self._config.ignore_dirs = ignore_dirs
 
     def _on_config_changed(self, config_dict):
-        pass
+        # 更新配置对象中的字段
+        if "header" in config_dict:
+            self._config.header = config_dict["header"]
+        if "page_format" in config_dict:
+            self._config.page_format = config_dict["page_format"]
+        if "custom_page_format" in config_dict:
+            self._config.custom_page_format = config_dict["custom_page_format"]
+        if "line_numbering" in config_dict:
+            self._config.line_numbering = config_dict["line_numbering"]
 
     def _on_count(self, e):
         """统计代码行数"""
@@ -226,15 +241,18 @@ class MainView(ft.Column):
                 effective_lines = stats.total_lines
                 estimated_pages = stats.pages
                 recommend_mode = "全部输出"
-                if estimated_pages > 200:
-                    recommend_mode = "前 30 页"
-                elif estimated_pages > 100:
-                    recommend_mode = "前 50 页"
+                if estimated_pages > 60:
+                    recommend_mode = "前后各30页（共60页）"
                 
                 print(f"[后台] 准备更新UI：有效行数 {effective_lines}，预计页数 {estimated_pages}")
                 
                 self.page.loop.call_soon_threadsafe(
                     lambda: self._code_stats2_panel.update_stats(effective_lines, estimated_pages, recommend_mode)
+                )
+                
+                # 更新配置面板的推荐输出模式
+                self.page.loop.call_soon_threadsafe(
+                    lambda: self._config_panel.set_recommend_mode(recommend_mode)
                 )
                 
                 # 更新文件列表
@@ -295,15 +313,13 @@ class MainView(ft.Column):
                 
                 # 使用配置面板的输出设置
                 output_mode_config = self._config_panel.get_output_mode()
-                # 转换配置面板的输出模式为 docx_generator 可用的模式
-                if output_mode_config == "auto":
-                    output_mode = "auto"
-                elif output_mode_config == "all":
+                if output_mode_config == "all":
                     output_mode = "all"
                 elif output_mode_config == "before_after_30":
-                    output_mode = "split"
+                    output_mode = "before_after_30"
                 else:
-                    output_mode = "auto"
+                    # 默认全部输出
+                    output_mode = "all"
                 
                 lines_per_page = self._config_panel.get_lines_per_page()
                 process_options = self._options_panel.get_process_options()
@@ -311,12 +327,14 @@ class MainView(ft.Column):
                 strip_empty_lines = process_options["strip_empty_lines"]
                 page_format = self._config_panel.get_page_format()
                 custom_page_format = self._config_panel.get_custom_page_format()
+                line_numbering = self._config_panel.get_line_numbering()
                 output_dir = self._config_panel.get_output_path()
 
                 output_path = generate_docx(
                     header_text=header,
                     page_format=page_format,
                     custom_page_format=custom_page_format,
+                    line_numbering=line_numbering,
                     files=files,
                     ignore_dir_names=ignore_set,
                     strip_comments_flag=strip_comments,

@@ -36,7 +36,7 @@ class CodeStats2Panel(ft.Container):
 
         # 推荐输出模式
         self._recommend_mode = ft.Text(
-            "全部输出",
+            "未统计",
             size=16,
             weight=ft.FontWeight.W_500,
             color=ft.Colors.BLUE_600,

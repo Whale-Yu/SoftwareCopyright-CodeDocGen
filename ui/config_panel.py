@@ -46,8 +46,9 @@ class ConfigPanel(ft.Column):
             ],
             value="arabic",
             border_radius=8,
-            dense=True,
+            dense=False,
             text_size=13,
+            height=40,
             expand=True,
             on_select=self._on_page_format_change,
         )
@@ -79,8 +80,25 @@ class ConfigPanel(ft.Column):
             ],
             value="header_right",
             border_radius=8,
-            dense=True,
+            dense=False,
             text_size=12,
+            height=40,
+            expand=True,
+            on_select=self._notify_config,
+        )
+
+        self._line_numbering_label = ft.Text("行号设置", size=14)
+        self._line_numbering_dd = ft.Dropdown(
+            options=[
+                ft.dropdown.Option(key="none", text="无", style=ft.TextStyle(size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="continuous", text="连续编号", style=ft.TextStyle(size=12, weight=ft.FontWeight.W_500)),
+                ft.dropdown.Option(key="per_page", text="每页重编行号", style=ft.TextStyle(size=12, weight=ft.FontWeight.W_500)),
+            ],
+            value="none",
+            border_radius=8,
+            dense=False,
+            text_size=13,
+            height=40,
             expand=True,
             on_select=self._notify_config,
         )
@@ -113,6 +131,10 @@ class ConfigPanel(ft.Column):
                     self._page_position_label,
                     ft.Container(height=2),
                     self._page_position_dd,
+                    ft.Container(height=12),
+                    self._line_numbering_label,
+                    ft.Container(height=2),
+                    self._line_numbering_dd,
                 ],
                 spacing=0,
             ),
@@ -135,6 +157,7 @@ class ConfigPanel(ft.Column):
             border_radius=8,
             dense=True,
             text_size=13,
+            height=35,
             read_only=True,
             disabled=True,
             width=100,
@@ -143,20 +166,14 @@ class ConfigPanel(ft.Column):
 
         # 输出模式
         self._output_mode_label = ft.Text("输出模式", size=14)
+        self._recommend_text = ft.Text("（未统计）", size=12, color=ft.Colors.GREY_500)
         self._output_mode_group = ft.RadioGroup(
             content=None,
-            value="auto",
+            value=None,
             on_change=self._notify_config,
         )
         output_mode_radios = ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Radio(value="auto", label="自动推荐"),
-                        ft.Text("系统推荐：全部输出", size=12, color=ft.Colors.GREEN_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                ),
                 ft.Radio(value="all", label="全部输出"),
                 ft.Radio(value="before_after_30", label="前后各30页（共60页）"),
             ],
@@ -173,6 +190,7 @@ class ConfigPanel(ft.Column):
             text_size=13,
             expand=True,
             on_change=self._notify_config,
+            height=35,
         )
         self._output_path_btn = ft.ElevatedButton(
             "浏览",
@@ -218,9 +236,15 @@ class ConfigPanel(ft.Column):
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     ft.Container(height=12),
+            ft.Row(
+                [
                     self._output_mode_label,
-                    ft.Container(height=2),
-                    self._output_mode_group,
+                    self._recommend_text,
+                ],
+                spacing=8,
+            ),
+            ft.Container(height=2),
+            self._output_mode_group,
                     ft.Container(height=12),
                     self._output_path_label,
                     ft.Container(height=2),
@@ -296,6 +320,9 @@ class ConfigPanel(ft.Column):
     def get_page_position(self) -> str:
         return self._page_position_dd.value or "header_right"
 
+    def get_line_numbering(self) -> str:
+        return self._line_numbering_dd.value or "none"
+
     def get_lines_per_page(self) -> int:
         return 50
 
@@ -311,6 +338,7 @@ class ConfigPanel(ft.Column):
             "page_format": self.get_page_format(),
             "custom_page_format": self.get_custom_page_format(),
             "page_position": self.get_page_position(),
+            "line_numbering": self.get_line_numbering(),
             "lines_per_page": self.get_lines_per_page(),
             "output_mode": self.get_output_mode(),
             "output_path": self.get_output_path(),
@@ -325,7 +353,13 @@ class ConfigPanel(ft.Column):
         self._custom_page_format.value = config.get("custom_page_format", "")
         self._custom_page_format.visible = (self._page_format_dd.value == "custom")
         self._page_position_dd.value = config.get("page_position", "header_right")
-        self._output_mode_group.value = config.get("output_mode", "auto")
+        self._line_numbering_dd.value = config.get("line_numbering", "none")
+        # 如果配置中有输出模式则恢复，否则保持 None
+        output_mode = config.get("output_mode")
+        if output_mode:
+            self._output_mode_group.value = output_mode
+        else:
+            self._output_mode_group.value = None
         self._output_path_input.value = config.get("output_path", "")
         self.update()
 
@@ -333,3 +367,32 @@ class ConfigPanel(ft.Column):
     def set_button_enabled(self, enabled: bool):
         self._generate_btn.disabled = not enabled
         self._generate_btn.update()
+
+    # --- 推荐模式 ---
+    def set_recommend_mode(self, recommend_mode: str):
+        """
+        设置推荐输出模式
+        
+        Args:
+            recommend_mode: 推荐模式文本，如 "全部输出"、"前后各30页（共60页）"
+        """
+        # 更新推荐文本
+        self._recommend_text.value = f"（系统推荐：{recommend_mode}）"
+        self._recommend_text.color = ft.Colors.GREEN_600
+        
+        # 根据推荐模式选择对应的选项
+        if recommend_mode == "全部输出":
+            self._output_mode_group.value = "all"
+        elif recommend_mode == "前后各30页（共60页）":
+            self._output_mode_group.value = "before_after_30"
+        else:
+            self._output_mode_group.value = None
+        
+        self.update()
+
+    def reset_output_mode(self):
+        """重置输出模式为未选中状态"""
+        self._output_mode_group.value = None
+        self._recommend_text.value = "（未统计）"
+        self._recommend_text.color = ft.Colors.GREY_500
+        self.update()
