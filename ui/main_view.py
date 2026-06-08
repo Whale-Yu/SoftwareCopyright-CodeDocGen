@@ -253,7 +253,7 @@ class MainView(ft.Column):
                 # 更新文件列表
                 files_str = [str(f) for f in self._files]
                 self.page.loop.call_soon_threadsafe(
-                    lambda: self._code_file_list_panel.update_files(files_str, self._source_folder)
+                    lambda: self._code_file_list_panel.update_files(files_str, self._source_folder, strip_comments, strip_empty_lines)
                 )
                 
                 self.page.loop.call_soon_threadsafe(

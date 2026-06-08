@@ -27,7 +27,7 @@ from core.counter import count_single_file_lines
 
 class CodeFileInfo:
     """代码文件信息"""
-    def __init__(self, file_path: str, root_path: str):
+    def __init__(self, file_path: str, root_path: str, strip_comments_flag: bool = True, strip_empty_lines_flag: bool = True):
         self.file_path = file_path
         self.file_name = os.path.basename(file_path)
         
@@ -47,7 +47,7 @@ class CodeFileInfo:
         self.modified_time = datetime.fromtimestamp(os.path.getmtime(file_path))
         
         # 统计代码行数
-        self.code_lines = count_single_file_lines(Path(file_path))
+        self.code_lines = count_single_file_lines(Path(file_path), strip_comments_flag, strip_empty_lines_flag)
 
     def _detect_language(self) -> str:
         """根据文件扩展名检测语言"""
@@ -162,10 +162,10 @@ class CodeFileListPanel(ft.Container):
             expand=True,
         )
 
-    def update_files(self, files: List[str], root_path: str = ""):
+    def update_files(self, files: List[str], root_path: str = "", strip_comments_flag: bool = True, strip_empty_lines_flag: bool = True):
         """更新文件列表"""
         self._root_path = root_path
-        self._all_files = [CodeFileInfo(file_path, root_path) for file_path in files]
+        self._all_files = [CodeFileInfo(file_path, root_path, strip_comments_flag, strip_empty_lines_flag) for file_path in files]
         self._total_pages = (len(self._all_files) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE
         if self._total_pages == 0:
             self._total_pages = 1
