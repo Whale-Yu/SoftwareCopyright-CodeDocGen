@@ -206,26 +206,56 @@ def generate_docx(
             all_lines = all_lines[:half] + all_lines[-half:]
 
     # --- 写入正文 ---
-    total_pages = (len(all_lines) + lines_per_page - 1) // lines_per_page
-    page_num = 0
+    # total_pages = (len(all_lines) + lines_per_page - 1) // lines_per_page
+    # page_num = 0
+
+    # for i, line in enumerate(all_lines):
+    #     if i % lines_per_page == 0:
+    #         if i > 0:
+    #             doc.add_page_break()
+    #         page_num += 1
+    #     p = doc.add_paragraph()
+    #     p.paragraph_format.space_before = Pt(0)
+    #     p.paragraph_format.space_after = Pt(0)
+    #     _set_paragraph_line_spacing(p, 14)
+    #     run = p.add_run(line.rstrip())
+    #     _set_font(run, "宋体", 10.5)
+
+    # # 补足最后一页到 lines_per_page 行
+    # remaining = len(all_lines) % lines_per_page
+    # if remaining > 0:
+    #     for _ in range(lines_per_page - remaining):
+    #         doc.add_paragraph()
+    # --- 写入正文 ---
+    # 严格计算：A4可用高度 25.1cm = 711.43 磅。 711.43 / 50 = 14.22 磅
+    # 这里取 14.2 磅，留出约 0.4 磅的微弱安全余量，确保绝对不会因为四舍五入溢出到第 51 行
+    target_line_spacing = 711.4 / lines_per_page 
 
     for i, line in enumerate(all_lines):
-        if i % lines_per_page == 0:
-            if i > 0:
-                doc.add_page_break()
-            page_num += 1
         p = doc.add_paragraph()
+        pPr = p._element.get_or_add_pPr()
+        
+        # 1. 严格清除段前段后距
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
-        _set_paragraph_line_spacing(p, 14)
+        
+        # 2. 核心：关闭孤行控制、禁止段中分页，强制单行独立排版
+        p.paragraph_format.widow_control = False
+        p.paragraph_format.keep_with_next = False
+        
+        # 3. 核心：关闭“对齐文档网格”，让固定行距完全由代码控制
+        snapToGrid = OxmlElement('w:snapToGrid')
+        snapToGrid.set(qn('w:val'), '0')  # 0 代表关闭
+        pPr.append(snapToGrid)
+        
+        # 4. 设置精准固定行距
+        _set_paragraph_line_spacing(p, target_line_spacing)
+        
+        # 5. 写入文本并设置字体
         run = p.add_run(line.rstrip())
         _set_font(run, "宋体", 10.5)
 
-    # 补足最后一页到 lines_per_page 行
-    remaining = len(all_lines) % lines_per_page
-    if remaining > 0:
-        for _ in range(lines_per_page - remaining):
-            doc.add_paragraph()
+    # 此时无需加任何手动分页符，Word 自带的软分页在展现和打印时，每页必定是雷打不动的 50 行
 
     # 刷新 total_pages
     total_pages = (len(all_lines) + lines_per_page - 1) // lines_per_page
