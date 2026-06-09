@@ -11,6 +11,8 @@ Turn your source code into standard copyright code documents in 1 second.
 Copyright (c) 2026 by 余俊瑜, All Rights Reserved. 
 '''
 
+from pathlib import Path
+
 import flet as ft
 from ui.main_view import MainView
 
@@ -19,6 +21,7 @@ WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 800
 WINDOW_MIN_WIDTH = 900
 WINDOW_MIN_HEIGHT = 600
+APP_ICON = str(Path(__file__).parent / "assets" / "icons" / "icon-1.ico")
 """
 默认尺寸
 width = 1600
@@ -34,9 +37,9 @@ min_height = 800
 """
 
 
-
 def main(page: ft.Page):
     page.title = "SC-CodeDocGen - \u8f6f\u8457\u4ee3\u7801\u6587\u6863\u751f\u6210\u5668"
+    page.window.icon = APP_ICON
     page.window.width = WINDOW_WIDTH
     page.window.height = WINDOW_HEIGHT
     page.window.min_width = WINDOW_MIN_WIDTH
